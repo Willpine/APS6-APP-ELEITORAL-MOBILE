@@ -4,6 +4,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
@@ -16,12 +18,22 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.face.FaceRecognizer;
 import org.opencv.face.LBPHFaceRecognizer;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.osgi.OpenCVNativeLoader;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+
+import static org.opencv.objdetect.Objdetect.CASCADE_SCALE_IMAGE;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -35,8 +47,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private CameraBridgeViewBase mOpenCvCameraView;
     FaceRecognizer recognizer;
-    private int w, h;
+    private double w, h;
     CascadeClassifier cascade;
+    int[] labels = new int[]{1};
+    Mat frame, frame_gray;
+    MatOfRect faces ;
+    Rect[] facesArray;
+    Mat mRgba;
+    //MatOfByte mem = new MatOfByte();
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -46,7 +64,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 {
                     //Log.i(TAG, "OpenCV loaded successfully");
                     mOpenCvCameraView.enableView();
-
                     try {
                         initializeOpenCVDependencies();
                     } catch (IOException e) {
@@ -88,20 +105,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     public void onCameraViewStarted(int width, int height) {
+        mRgba = new Mat();
         w = width;
         h = height;
-
     }
 
     public void onCameraViewStopped() {
-    }
-
-    // É aqui que chamamos/retornamos o que está na camera
-    // Método recognize
-    @Override
-    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        recognize(inputFrame.rgba());
-        return inputFrame.gray();
+        mRgba.release();;
     }
 
     @Override
@@ -123,13 +133,48 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private void initializeOpenCVDependencies() throws IOException {
         mOpenCvCameraView.enableView();
         recognizer = LBPHFaceRecognizer.create();
-        System.out.println(recognizer.toString()+ " DEUUUUUUUUUUUUU CEEEEEEEEEEEEEEERTO");
+        InputStream stream = getResources().openRawResource(R.raw.haarcascade_frontalface_alt2);
+        File cascDir = getDir("cascade", Context.MODE_PRIVATE);
+        File haarFile = new File(cascDir, "haarcascade_frontalface_alt2.xml");
+
+        FileOutputStream outStream = new FileOutputStream(haarFile);
+        byte[] buffer = new byte[4096];
+        int bytesRead;
+
+        while((bytesRead = stream.read(buffer)) != -1)
+        {
+            outStream.write(buffer,0,bytesRead);
+        }
+        stream.close();
+        outStream.close();
+
+        cascade = new CascadeClassifier(haarFile.getAbsolutePath());
+
+        MatOfRect faces = new MatOfRect();
 
     }
 
-    public Mat recognize(Mat aInputFrame) {
-        Mat outputImg = new Mat();
-        recognizer = LBPHFaceRecognizer.create();
-        return outputImg;
+    @Override
+    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+        return recognize(inputFrame);
+        //return inputFrame.rgba();
+    }
+
+    public Mat recognize(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+        faces = new MatOfRect();
+        mRgba = inputFrame.gray();
+        //Imgproc.cvtColor(inputFrame.rgba(), frame_gray, Imgproc.COLOR_BGR2GRAY);
+        //Imgproc.equalizeHist(frame_gray, frame_gray);
+        //cascade.detectMultiScale(mRgba, faces, 1.1, 2, 0|CASCADE_SCALE_IMAGE, new Size(30, 30), new Size(w, h) );
+        cascade.detectMultiScale(mRgba,faces,1.5,2);
+        //cascade.detectMultiScale(mRgba,faces);
+
+        for(Rect rect : faces.toArray()){
+            Imgproc.rectangle(mRgba,new Point(rect.x,rect.y),new Point(rect.x+rect.width,rect.y+rect.height),new Scalar(255,0,0));
+        }
+
+        Log.d("OpenCV", "FACES: " + faces.toArray().length);
+
+        return mRgba;
     }
 }
