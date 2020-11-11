@@ -124,21 +124,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mOpenCvCameraView.enableView();
         recognizer = LBPHFaceRecognizer.create();
         System.out.println(recognizer.toString()+ " DEUUUUUUUUUUUUU CEEEEEEEEEEEEEEERTO");
-        cascade = new CascadeClassifier("haarcascade_frontalface_alt2.xml"); //Apontar para arquivo
-        //detector = FeatureDetector.create(FeatureDetector.ORB);
-        //descriptor = DescriptorExtractor.create(DescriptorExtractor.ORB);
-        //matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
-        //img1 = new Mat();
-        //AssetManager assetManager = getAssets();
-        //InputStream istr = assetManager.open("a.jpeg");
-        //Bitmap bitmap = BitmapFactory.decodeStream(istr);
-        //Utils.bitmapToMat(bitmap, img1);
-        //Imgproc.cvtColor(img1, img1, Imgproc.COLOR_RGB2GRAY);
-        //img1.convertTo(img1, 0); //converting the image to match with the type of the cameras image
-        //descriptors1 = new Mat();
-        //keypoints1 = new MatOfKeyPoint();
-        //detector.detect(img1, keypoints1);
-        //descriptor.compute(img1, keypoints1, descriptors1);
 
     }
 
