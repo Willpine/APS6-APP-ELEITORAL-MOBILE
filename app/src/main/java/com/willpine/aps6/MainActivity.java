@@ -49,7 +49,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     FaceRecognizer recognizer;
     private double w, h;
     CascadeClassifier cascade;
-    int[] labels = new int[]{1};
+    int[] labels;
+    double[] confidence;
     Mat frame, frame_gray;
     MatOfRect faces ;
     Rect[] facesArray;
@@ -131,27 +132,43 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
 
     private void initializeOpenCVDependencies() throws IOException {
+        labels = new int[]{0,0,0,0,0,};
+        confidence = new double[]{0,0,0,0,0};
         mOpenCvCameraView.enableView();
         recognizer = LBPHFaceRecognizer.create();
         InputStream stream = getResources().openRawResource(R.raw.haarcascade_frontalface_alt2);
+        InputStream streamTrei = getResources().openRawResource(R.raw.trainner);
         File cascDir = getDir("cascade", Context.MODE_PRIVATE);
         File haarFile = new File(cascDir, "haarcascade_frontalface_alt2.xml");
+        File treiFile = new File(cascDir, "trainner.xml");
 
-        FileOutputStream outStream = new FileOutputStream(haarFile);
+        FileOutputStream outStreamHaar = new FileOutputStream(haarFile);
+        FileOutputStream outStreamTrei = new FileOutputStream(treiFile);
+
         byte[] buffer = new byte[4096];
         int bytesRead;
 
         while((bytesRead = stream.read(buffer)) != -1)
         {
-            outStream.write(buffer,0,bytesRead);
+            outStreamHaar.write(buffer,0,bytesRead);
+        }
+
+        while((bytesRead = streamTrei.read(buffer)) != -1)
+        {
+            outStreamTrei.write(buffer,0,bytesRead);
         }
         stream.close();
-        outStream.close();
+        outStreamHaar.close();
+        outStreamTrei.close();
 
         cascade = new CascadeClassifier(haarFile.getAbsolutePath());
 
-        MatOfRect faces = new MatOfRect();
+        recognizer.read(treiFile.getAbsolutePath());
 
+
+
+        MatOfRect faces = new MatOfRect();
+        Log.d("OpenCVRec", "LABEL INFO : " + recognizer.getLabelInfo(1));
     }
 
     @Override
@@ -166,14 +183,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         //Imgproc.cvtColor(inputFrame.rgba(), frame_gray, Imgproc.COLOR_BGR2GRAY);
         //Imgproc.equalizeHist(frame_gray, frame_gray);
         //cascade.detectMultiScale(mRgba, faces, 1.1, 2, 0|CASCADE_SCALE_IMAGE, new Size(30, 30), new Size(w, h) );
-        cascade.detectMultiScale(mRgba,faces,1.5,2);
-        //cascade.detectMultiScale(mRgba,faces);
+        //cascade.detectMultiScale(mRgba,faces,1.5,5);
+        cascade.detectMultiScale(mRgba,faces);
 
         for(Rect rect : faces.toArray()){
             Imgproc.rectangle(mRgba,new Point(rect.x,rect.y),new Point(rect.x+rect.width,rect.y+rect.height),new Scalar(255,0,0));
-        }
+            recognizer.predict(mRgba,labels,confidence);
 
-        Log.d("OpenCV", "FACES: " + faces.toArray().length);
+            if(confidence[0]>30) {
+                Log.d("conf", "CONF1: " + confidence[0]);
+                Log.d("label", "LABEL1: " + labels[0]);
+            }
+        }
 
         return mRgba;
     }
