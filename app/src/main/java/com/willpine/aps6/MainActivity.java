@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     MatOfRect faces ;
     Rect[] facesArray;
     Mat mRgba;
+    String[] candidatos;
     //MatOfByte mem = new MatOfByte();
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -132,15 +133,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
 
     private void initializeOpenCVDependencies() throws IOException {
-        labels = new int[]{0,0,0,0,0,};
-        confidence = new double[]{0,0,0,0,0};
+        labels = new int[]{0};
+        confidence = new double[]{0};
+        candidatos = new String[]{"Bolsonaro", "Arthur", "Bruno", "Russoumanno", "Boulos"};
         mOpenCvCameraView.enableView();
         recognizer = LBPHFaceRecognizer.create();
         InputStream stream = getResources().openRawResource(R.raw.haarcascade_frontalface_alt2);
-        InputStream streamTrei = getResources().openRawResource(R.raw.trainner);
+        InputStream streamTrei = getResources().openRawResource(R.raw.trainner2);
         File cascDir = getDir("cascade", Context.MODE_PRIVATE);
         File haarFile = new File(cascDir, "haarcascade_frontalface_alt2.xml");
-        File treiFile = new File(cascDir, "trainner.xml");
+        File treiFile = new File(cascDir, "trainner2.yml");
 
         FileOutputStream outStreamHaar = new FileOutputStream(haarFile);
         FileOutputStream outStreamTrei = new FileOutputStream(treiFile);
@@ -162,13 +164,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         outStreamTrei.close();
 
         cascade = new CascadeClassifier(haarFile.getAbsolutePath());
-
         recognizer.read(treiFile.getAbsolutePath());
-
-
-
         MatOfRect faces = new MatOfRect();
-        Log.d("OpenCVRec", "LABEL INFO : " + recognizer.getLabelInfo(1));
+
     }
 
     @Override
@@ -179,20 +177,21 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     public Mat recognize(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         faces = new MatOfRect();
-        mRgba = inputFrame.gray();
-        //Imgproc.cvtColor(inputFrame.rgba(), frame_gray, Imgproc.COLOR_BGR2GRAY);
-        //Imgproc.equalizeHist(frame_gray, frame_gray);
+        mRgba = inputFrame.rgba();
+        Imgproc.cvtColor(inputFrame.rgba(), mRgba, Imgproc.COLOR_BGR2GRAY);
+        //Imgproc.equalizeHist(mRgba, mRgba);
         //cascade.detectMultiScale(mRgba, faces, 1.1, 2, 0|CASCADE_SCALE_IMAGE, new Size(30, 30), new Size(w, h) );
-        //cascade.detectMultiScale(mRgba,faces,1.5,5);
-        cascade.detectMultiScale(mRgba,faces);
+        cascade.detectMultiScale(mRgba,faces,1.5,5);
+        //cascade.detectMultiScale(mRgba,faces);
 
         for(Rect rect : faces.toArray()){
             Imgproc.rectangle(mRgba,new Point(rect.x,rect.y),new Point(rect.x+rect.width,rect.y+rect.height),new Scalar(255,0,0));
-            recognizer.predict(mRgba,labels,confidence);
+            recognizer.predict(mRgba.submat(rect),labels,confidence);
 
-            if(confidence[0]>30) {
-                Log.d("conf", "CONF1: " + confidence[0]);
-                Log.d("label", "LABEL1: " + labels[0]);
+            if(confidence[0]>70) {
+                Log.d("conf", "CONF1: " + confidence[0] + " LABEL1: " + candidatos[labels[0]]);
+
+
             }
         }
 
