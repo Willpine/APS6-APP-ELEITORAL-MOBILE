@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">aps6</string>
+    <string name="arthur_link"><a href="https://divulgacandcontas.tse.jus.br/divulga/#/candidato/2020/2030402020/71072/250000641390">Página do Candidato</a></string>
+    <string name="bruno_link"><a href="https://divulgacandcontas.tse.jus.br/divulga/#/candidato/2020/2030402020/71072/250000896546">Página do Candidato</a></string>
+    <string name="celso_link"><a href="https://divulgacandcontas.tse.jus.br/divulga/#/candidato/2020/2030402020/71072/250000746936">Página do Candidato</a></string>
+    <string name="boulos_link"><a href="https://divulgacandcontas.tse.jus.br/divulga/#/candidato/2020/2030402020/71072/250001094597">Página do Candidato</a></string>
 </resources>

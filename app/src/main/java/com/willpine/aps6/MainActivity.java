@@ -7,9 +7,12 @@ import android.Manifest;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -49,14 +52,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     FaceRecognizer recognizer;
     private double w, h;
     CascadeClassifier cascade;
-    int[] labels;
+    int[] labels,links;
     double[] confidence;
-    Mat frame, frame_gray;
     MatOfRect faces ;
     Rect[] facesArray;
     Mat mRgba;
     String[] candidatos;
-    //MatOfByte mem = new MatOfByte();
+    TextView txtCandidato,linkCandidato;
+    int label;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -87,7 +90,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
-        mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.HelloOpenCvView);
+
+        txtCandidato = findViewById(R.id.txtCandidato);
+
+        linkCandidato = findViewById(R.id.linkCandidato);
+        linkCandidato.setClickable(true);
+        linkCandidato.setMovementMethod(LinkMovementMethod.getInstance());
+
+        mOpenCvCameraView = findViewById(R.id.HelloOpenCvView);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
     }
@@ -135,9 +145,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private void initializeOpenCVDependencies() throws IOException {
         labels = new int[]{0};
         confidence = new double[]{0};
-        candidatos = new String[]{"Bolsonaro", "Arthur", "Bruno", "Russoumanno", "Boulos"};
+        candidatos = new String[]{"Arthur", "Bruno Covas", "Celso"};
+        links= new int[]{R.string.arthur_link,R.string.bruno_link,R.string.celso_link};
         mOpenCvCameraView.enableView();
-        recognizer = LBPHFaceRecognizer.create();
+        recognizer = LBPHFaceRecognizer.create(1,8,8,8,1.7976931348623157e+308);
+        //recognizer = LBPHFaceRecognizer.create(1,8,8,8,1.7976931348623157e+308);
         InputStream stream = getResources().openRawResource(R.raw.haarcascade_frontalface_alt2);
         InputStream streamTrei = getResources().openRawResource(R.raw.trainner2);
         File cascDir = getDir("cascade", Context.MODE_PRIVATE);
@@ -177,21 +189,28 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     public Mat recognize(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         faces = new MatOfRect();
-        mRgba = inputFrame.rgba();
-        Imgproc.cvtColor(inputFrame.rgba(), mRgba, Imgproc.COLOR_BGR2GRAY);
-        //Imgproc.equalizeHist(mRgba, mRgba);
-        //cascade.detectMultiScale(mRgba, faces, 1.1, 2, 0|CASCADE_SCALE_IMAGE, new Size(30, 30), new Size(w, h) );
-        cascade.detectMultiScale(mRgba,faces,1.5,5);
+        mRgba = inputFrame.gray();
+        //Imgproc.cvtColor(inputFrame.rgba(), mRgba, Imgproc.COLOR_BGR2GRAY);
+        //Imgproc.equalizeHist(inputFrame.rgba(), mRgba);
+        //cascade.detectMultiScale(mRgba, faces, 1.5, 5, 0|CASCADE_SCALE_IMAGE, new Size(30, 30), new Size(w, h) );
+        cascade.detectMultiScale(mRgba,faces,1.2,5);
         //cascade.detectMultiScale(mRgba,faces);
 
         for(Rect rect : faces.toArray()){
             Imgproc.rectangle(mRgba,new Point(rect.x,rect.y),new Point(rect.x+rect.width,rect.y+rect.height),new Scalar(255,0,0));
             recognizer.predict(mRgba.submat(rect),labels,confidence);
 
-            if(confidence[0]>70) {
+            label = labels[0];
+
+            if(confidence[0]<=50) {
                 Log.d("conf", "CONF1: " + confidence[0] + " LABEL1: " + candidatos[labels[0]]);
-
-
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        txtCandidato.setText(candidatos[label]);
+                        linkCandidato.setText(links[label]);
+                    }
+                });
             }
         }
 
