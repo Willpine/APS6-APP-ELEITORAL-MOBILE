@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     double[] confidence; // Valor que será retornado a cada reconhecimento feito. Quanto menor, mais precisa foi a detecção
     MatOfRect faces ; // Faces detectadas pelo Classifier
     Rect[] facesArray; // Array de faces na forma de retângulos
-    Mat mRgba; // Representa uma Matriz da imagem colorida capturada
+    Mat mRgba,mGray; // Representa uma Matriz da imagem colorida capturada
     String[] candidatos; // Lista com nomes de candidatos
     TextView txtCandidato,linkCandidato; // Texto que aparece na tela do app
     int label; // id de um candidato
@@ -124,12 +124,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     public void onCameraViewStarted(int width, int height) {
         mRgba = new Mat();
+        mGray = new Mat();
         w = width;
         h = height;
     }
 
     public void onCameraViewStopped() {
-        mRgba.release();;
+        mRgba.release();
+        mGray.release();
     }
 
     @Override
@@ -198,7 +200,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     // Reconhece faces, atualiza o nome e links e devolve frame retângulo nas faces detectadas
     public Mat recognize(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         faces = new MatOfRect();
-        mRgba = inputFrame.gray(); // Tornamos o frame analisado em GrayScale
+        mGray = inputFrame.gray();
+        mRgba = inputFrame.rgba(); // Tornamos o frame analisado em GrayScale
         cascade.detectMultiScale(mRgba,faces,1.2,5);
 
         // Para cada face, desenha-se um retângulo ao redor da região detectada pelo Classifier
@@ -207,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             // Momento do reconhecimento
             // Ao ser chamado, este método atualiza as variáveis de labels e confiança
             // Se as chamarmos, elas estarão com os valores do candidato reconhecido
-            recognizer.predict(mRgba.submat(rect),labels,confidence);
+            recognizer.predict(mGray.submat(rect),labels,confidence);
 
             label = labels[0];
 
