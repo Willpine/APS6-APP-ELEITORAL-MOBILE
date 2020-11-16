@@ -38,8 +38,11 @@ import java.io.InputStream;
 
 import static org.opencv.objdetect.Objdetect.CASCADE_SCALE_IMAGE;
 
+// Atividade principal - Iniciada assim que o App é iniciado
+// Implementa Interface que nos permite acessar e manipular a câmera física através do OpenCV
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
+    // Inicializador estático dos Módulos do OpenCV
     static {
         //System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         if (!OpenCVLoader.initDebug())
@@ -48,26 +51,27 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             Log.d("SUCCESS", "OpenCV loaded");
     }
 
-    private CameraBridgeViewBase mOpenCvCameraView;
-    FaceRecognizer recognizer;
-    private double w, h;
-    CascadeClassifier cascade;
-    int[] labels,links;
-    double[] confidence;
-    MatOfRect faces ;
-    Rect[] facesArray;
-    Mat mRgba;
-    String[] candidatos;
-    TextView txtCandidato,linkCandidato;
-    int label;
+    private CameraBridgeViewBase mOpenCvCameraView; // Representa a câmera física
+    FaceRecognizer recognizer; // Reconhecedor de Faces
+    private double w, h; // Tamanho do frame que será capturado
+    CascadeClassifier cascade; // Detector de faces no frame - o Classifier
+    int[] labels,links; // Labels(id) e links de cada candidato
+    double[] confidence; // Valor que será retornado a cada reconhecimento feito. Quanto menor, mais precisa foi a detecção
+    MatOfRect faces ; // Faces detectadas pelo Classifier
+    Rect[] facesArray; // Array de faces na forma de retângulos
+    Mat mRgba; // Representa uma Matriz da imagem colorida capturada
+    String[] candidatos; // Lista com nomes de candidatos
+    TextView txtCandidato,linkCandidato; // Texto que aparece na tela do app
+    int label; // id de um candidato
 
+    // Inicializa de maneira Assíncrona a câmera e as variáveis utilizadas no reconhecimento
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS:
                 {
-                    //Log.i(TAG, "OpenCV loaded successfully");
+                    Log.i("OpenCV", "OpenCV loaded successfully");
                     mOpenCvCameraView.enableView();
                     try {
                         initializeOpenCVDependencies();
@@ -83,6 +87,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
     };
 
+    // Chamado assim que o app é iniciado
     @Override
     public void onCreate(Bundle savedInstanceState) {
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 1);
@@ -91,12 +96,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
 
-        txtCandidato = findViewById(R.id.txtCandidato);
+        txtCandidato = findViewById(R.id.txtCandidato);// Instância do nome do candidato na tela
 
-        linkCandidato = findViewById(R.id.linkCandidato);
+        linkCandidato = findViewById(R.id.linkCandidato);//Instância do link da página do candidato na tela
         linkCandidato.setClickable(true);
         linkCandidato.setMovementMethod(LinkMovementMethod.getInstance());
 
+        // Torna a câmera visível
         mOpenCvCameraView = findViewById(R.id.HelloOpenCvView);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
@@ -141,15 +147,17 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
 
-
+    // Inicializa variáveis de maneira assícrona - Chamada no CallBack
     private void initializeOpenCVDependencies() throws IOException {
         labels = new int[]{0};
         confidence = new double[]{0};
         candidatos = new String[]{"Arthur", "Bruno Covas", "Celso"};
         links= new int[]{R.string.arthur_link,R.string.bruno_link,R.string.celso_link};
         mOpenCvCameraView.enableView();
+        // Inicialização do Recognizer
         recognizer = LBPHFaceRecognizer.create(1,8,8,8,1.7976931348623157e+308);
-        //recognizer = LBPHFaceRecognizer.create(1,8,8,8,1.7976931348623157e+308);
+
+        // Leitura e instanciamento do Recognizer e do Classifier
         InputStream stream = getResources().openRawResource(R.raw.haarcascade_frontalface_alt2);
         InputStream streamTrei = getResources().openRawResource(R.raw.trainner2);
         File cascDir = getDir("cascade", Context.MODE_PRIVATE);
@@ -176,7 +184,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         outStreamTrei.close();
 
         cascade = new CascadeClassifier(haarFile.getAbsolutePath());
-        recognizer.read(treiFile.getAbsolutePath());
+        recognizer.read(treiFile.getAbsolutePath()); // Lê o treinamento da parte 1
         MatOfRect faces = new MatOfRect();
 
     }
@@ -187,17 +195,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         //return inputFrame.rgba();
     }
 
+    // Reconhece faces, atualiza o nome e links e devolve frame retângulo nas faces detectadas
     public Mat recognize(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         faces = new MatOfRect();
-        mRgba = inputFrame.gray();
-        //Imgproc.cvtColor(inputFrame.rgba(), mRgba, Imgproc.COLOR_BGR2GRAY);
-        //Imgproc.equalizeHist(inputFrame.rgba(), mRgba);
-        //cascade.detectMultiScale(mRgba, faces, 1.5, 5, 0|CASCADE_SCALE_IMAGE, new Size(30, 30), new Size(w, h) );
+        mRgba = inputFrame.gray(); // Tornamos o frame analisado em GrayScale
         cascade.detectMultiScale(mRgba,faces,1.2,5);
-        //cascade.detectMultiScale(mRgba,faces);
 
+        // Para cada face, desenha-se um retângulo ao redor da região detectada pelo Classifier
         for(Rect rect : faces.toArray()){
             Imgproc.rectangle(mRgba,new Point(rect.x,rect.y),new Point(rect.x+rect.width,rect.y+rect.height),new Scalar(255,0,0));
+            // Momento do reconhecimento
+            // Ao ser chamado, este método atualiza as variáveis de labels e confiança
+            // Se as chamarmos, elas estarão com os valores do candidato reconhecido
             recognizer.predict(mRgba.submat(rect),labels,confidence);
 
             label = labels[0];
