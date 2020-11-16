@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".CameraActivity"
+    android:orientation="horizontal">
+
+    <org.opencv.android.JavaCameraView
+        android:layout_width="fill_parent"
+        android:layout_height="1000px"
+        android:visibility="gone"
+        android:id="@+id/HelloOpenCvView"
+        app:show_fps="true"
+        app:camera_id="any" />
+
+    <TextView
+        android:id="@+id/txtCandidato"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="250dp"
+        android:textAlignment="center"
+        android:rotation="90"
+        android:text="Aponte para\num candidato"
+        android:linksClickable="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="100dp"/>
+
+
+    <TextView
+        android:id="@+id/linkCandidato"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:rotation="90"
+        android:text=""
+        android:linksClickable="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="100dp"
+        android:layout_marginStart="100dp"
+        android:textAlignment="center"/>
+
+</RelativeLayout>

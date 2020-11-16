@@ -6,8 +6,8 @@
 6
 7    <uses-sdk
 8        android:minSdkVersion="22"
-8-->C:\Users\japam\AndroidStudioProjects\aps62\openCVLibrary343\src\main\AndroidManifest.xml
+8-->C:\Users\lucas\StudioProjects\APS6MOBILE\openCVLibrary343\src\main\AndroidManifest.xml
 9        android:targetSdkVersion="30" />
-9-->C:\Users\japam\AndroidStudioProjects\aps62\openCVLibrary343\src\main\AndroidManifest.xml
+9-->C:\Users\lucas\StudioProjects\APS6MOBILE\openCVLibrary343\src\main\AndroidManifest.xml
 10
 11</manifest>
